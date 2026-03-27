@@ -9,6 +9,7 @@ encoding e normalização de colunas.
 
 import pandas as pd
 import re
+import datetime
 from pipeline.config import ENCODINGS, SEPARADORES_CSV
 import unicodedata
 
@@ -73,6 +74,9 @@ def ler_excel_robusto(arquivo, sheet_name=0, **kwargs):
         def limpar_texto(x):
             if pd.isna(x):
                 return x
+            # Preserva datetime e outros tipos não-texto
+            if isinstance(x, (int, float, pd.Timestamp, datetime.datetime)):
+                return x
             x = str(x)
             x = re.sub(r"^[']+", "", x)          # remove apóstrofo inicial
             x = re.sub(r"[\r\n\t]", " ", x)      # remove quebras invisíveis
@@ -86,10 +90,10 @@ def ler_excel_robusto(arquivo, sheet_name=0, **kwargs):
         for col in df.select_dtypes(include=["object", "string"]).columns:
             df[col] = df[col].apply(limpar_texto)
 
-        # Exemplo: se quiser garantir que CPF seja numérico
+        # Limpa CPFs (remove caracteres não-dígitos)
         for col in df.columns:
             if "CPF" in col.upper():
-                df[col] = df[col].str.replace(r"\D", "", regex=True)  # remove tudo que não é dígito
+                df[col] = df[col].astype(str).str.replace(r"\D", "", regex=True)  # remove tudo que não é dígito
 
         return df
 
