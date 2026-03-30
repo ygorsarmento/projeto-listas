@@ -43,3 +43,12 @@ colunas_somente_tratadas, colunas_somente_atualizadas = colunas_diferentes(lista
 
 print("Colunas presentes em listas_tratadas mas não em listas_atualizadas:")
 print(colunas_somente_tratadas)
+
+# Acrescentar os dois DataFrames usando as colunas comuns mantendo as colunas exclusivas de cada um
+colunas_comuns = colunas_tratadas.intersection(colunas_atualizadas)
+listas_combinadas = pd.concat([listas_tratadas[[colunas_comuns]], listas_atualizadas[[colunas_comuns]]], ignore_index=True)
+
+# Exportar o DataFrame combinado para um novo arquivo Excel
+listas_combinadas.to_excel("C:\\Users\\ygors\\OneDrive - ICMBio\\Equipe PBV - Listas de Famílias\\Listas consolidadas\\Atualização_20260327\\Listas_Combinadas.xlsx", index=False)
+
+print("Listas combinadas exportadas com sucesso para Listas_Combinadas.xlsx")
