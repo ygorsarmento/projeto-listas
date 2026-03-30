@@ -5,7 +5,7 @@ Esse código tem como objetivo atualizar as listas de famílias que já foram tr
 
 import pandas as pd
 
-from pipeline.config import ARQUIVO_LISTAS_FAMILIAS_TRATADAS, ARQUIVO_LISTAS_FAMILIAS_ATUALIZADAS
+from pipeline.config import ARQUIVO_LISTAS_FAMILIAS_TRATADAS, ARQUIVO_LISTAS_FAMILIAS_ATUALIZADAS, DIRETORIO_SAIDA_XLSX_UPDATE
 from pipeline.extract.utils import ler_excel_robusto
 
 
@@ -49,6 +49,6 @@ colunas_comuns = colunas_tratadas.intersection(colunas_atualizadas)
 listas_combinadas = pd.concat([listas_tratadas[[colunas_comuns]], listas_atualizadas[[colunas_comuns]]], ignore_index=True)
 
 # Exportar o DataFrame combinado para um novo arquivo Excel
-listas_combinadas.to_excel("C:\\Users\\ygors\\OneDrive - ICMBio\\Equipe PBV - Listas de Famílias\\Listas consolidadas\\Atualização_20260327\\Listas_Combinadas.xlsx", index=False)
+#listas_combinadas.to_excel(f"{DIRETORIO_SAIDA_XLSX_UPDATE}\\Listas_Combinadas.xlsx", index=False)
 
 print("Listas combinadas exportadas com sucesso para Listas_Combinadas.xlsx")

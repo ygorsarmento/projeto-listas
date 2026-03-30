@@ -36,7 +36,7 @@ print("Linhas filtradas onde Coluna1 é VERDADEIRO:")
 print(listas_filtradas)
 
 # Exporta o DataFrame filtrado para um novo arquivo Excel
-listas_filtradas.to_excel("C:\\Users\\ygors\\OneDrive - ICMBio\\Equipe PBV - Listas de Famílias\\Listas consolidadas\\Atualização_20260327\\Listas_Filtradas.xlsx", index=False)
+listas_filtradas.to_excel(f"{DIRETORIO_SAIDA_XLSX_UPDATE}\\Listas_Filtradas.xlsx", index=False)
 print("Listas filtradas exportadas com sucesso para Listas_Filtradas.xlsx")
 
 # Cria uma planilha excel para cada combinação de NOME_UC e DT_ENVIO de por "VERDADEIRO" na Coluna1 e retira a Coluna1 da planilha final
