@@ -9,16 +9,12 @@ from pipeline.extract.utils import ler_excel_robusto
 
 
 def limpar_cpf(cpf):
-    """Extrai o primeiro CPF quando há múltiplos separados por ';'."""
+    """Mantém apenas os 11 primeiros dígitos numéricos do CPF e retorna (cpf, precisou_completar)."""
     if pd.isna(cpf):
-        return cpf
-    cpf = str(cpf).strip()
-    # Se tiver ';', pega apenas o primeiro CPF
-    if ';' in cpf:
-        cpf = cpf.split(';')[0].strip()
-    # Remove caracteres não numéricos e completa com zeros
-    cpf = ''.join(filter(str.isdigit, cpf)).zfill(11)
-    return cpf
+        return cpf, False
+    cpf_original = ''.join(filter(str.isdigit, str(cpf)))[:11]
+    precisou_completar = len(cpf_original) < 11 and len(cpf_original) > 0
+    return cpf_original.zfill(11) if cpf_original else cpf_original, precisou_completar
 
 
 def preparar_df(df):
@@ -26,7 +22,7 @@ def preparar_df(df):
     df = df.copy()
     for col in ['DT_SEI', 'DT_ENVIO', 'DT_NASC_RF']:
         df[col] = pd.to_datetime(df[col], errors='coerce').dt.strftime('%d/%m/%Y')
-    df['CPF_RF'] = df['CPF_RF'].apply(limpar_cpf)
+    df[['CPF_RF', 'CPF_COM_ZEROS']] = df['CPF_RF'].apply(limpar_cpf).tolist()
     return df
 
 
