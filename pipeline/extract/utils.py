@@ -66,6 +66,7 @@ def ler_excel_robusto(arquivo, sheet_name=0, **kwargs):
     - Substitui vírgula por ponto
     - Remove espaços extras
     - Converte CPFs para numérico limpo (se possível)
+    - Remove linhas que estão em branco
     """
     try:
         df = pd.read_excel(arquivo, sheet_name=sheet_name, **kwargs)
@@ -95,6 +96,8 @@ def ler_excel_robusto(arquivo, sheet_name=0, **kwargs):
             if "CPF" in col.upper():
                 df[col] = df[col].astype(str).str.replace(r"\D", "", regex=True)  # remove tudo que não é dígito
 
+        # Remove linhas completamente vazias
+        df.dropna(how="all", inplace=True)
         return df
 
     except Exception as e:

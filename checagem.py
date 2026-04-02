@@ -17,6 +17,10 @@ def limpar_cpf(cpf):
     precisou_completar = len(cpf_original) < 11 and len(cpf_original) > 0
     return cpf_original.zfill(11) if cpf_original else cpf_original, precisou_completar
 
+def remover_linhas_em_branco(df):
+    """Remove linhas que tem CPF_RF e NOME_RF vazios ou nulos."""
+    return df.dropna(subset=['CPF_RF', 'NOME_RF'], how='any')
+
 
 def preparar_df(df):
     """Formata datas e CPF para padronização."""
@@ -28,9 +32,21 @@ def preparar_df(df):
 
 
 def normalizar_colunas(df, colunas):
-    """Coloca colunas de texto em maiúsculas, retirar os acentos e caracteres especiais."""
+    """Colocar colunas de texto em maiúsculas, retirar os acentos e caracteres especiais ";", ".", ":"., "-".
+    Transforma NAO SABE e NAO SE APLICA em branco para facilitar comparação."""
     for col in colunas:
         df[col] = df[col].str.upper().str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8')
+        for char in [';', '.', ':', '-']:
+            df[col] = df[col].str.replace(char, '', regex=False)
+            # Substituir expressões padronizadas por vazio
+        substituicoes = [
+            'NAO SABE', 'NAO SE APLICA', 'NAO DECLARADA', 'NAO HA INFORMACAO',
+            'NAO INFORMADO', 'NAO INFORMADONAO SABE', 'NAO INFORMOU',
+            'NAO REGISTRADONAO POSSUI', 'NAO TEM', 'NAO TENHO',
+            '1 NAO SABE/NAO INFORMOU', 'NAO DECLARADO'
+        ]
+        for s in substituicoes:
+            df[col] = df[col].str.replace(s, '', regex=False)
     return df
 
 
@@ -39,6 +55,7 @@ def comparar_e_exportar_completo(df_false, df_true, arquivo_saida):
     Compara dois dataframes por CPF e NOME, mantendo TODOS os registros (false + true).
     Adiciona colunas indicadoras de correspondência e duplicidade.
     """
+    # Cria cópias para evitar alterações nos dataframes originais
     df_false = df_false.copy().reset_index(drop=True)
     df_true = df_true.copy().reset_index(drop=True)
     
@@ -107,7 +124,9 @@ def comparar_e_exportar_completo(df_false, df_true, arquivo_saida):
 
 # Carregar e preparar os dados
 listas_tratadas = ler_excel_robusto(ARQUIVO_LISTAS_FAMILIAS_ATUALIZADAS, sheet_name='dados_consolidados_enviados')
+listas_tratadas = remover_linhas_em_branco(listas_tratadas)
 listas_tratadas = preparar_df(listas_tratadas)
+
 
 # Filtrar por Coluna1
 true = listas_tratadas.query('Coluna1 == True').copy()
