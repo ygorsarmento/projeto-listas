@@ -43,7 +43,7 @@ def normalizar_colunas(df, colunas):
             'NAO SABE', 'NAO SE APLICA', 'NAO DECLARADA', 'NAO HA INFORMACAO',
             'NAO INFORMADO', 'NAO INFORMADONAO SABE', 'NAO INFORMOU',
             'NAO REGISTRADONAO POSSUI', 'NAO TEM', 'NAO TENHO',
-            '1 NAO SABE/NAO INFORMOU', 'NAO DECLARADO'
+            '1 NAO SABE/NAO INFORMOU', 'NAO DECLARADO', '1 NA?O SABE/', 'SEM INFORMACAO', 'N/I' 
         ]
         for s in substituicoes:
             df[col] = df[col].str.replace(s, '', regex=False)
