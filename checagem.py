@@ -132,9 +132,6 @@ listas_tratadas = preparar_df(listas_tratadas)
 true = listas_tratadas.query('Coluna1 == True').copy()
 false = listas_tratadas.query('Coluna1 == False').copy()
 
-# CPFs inválidos para filtragem
-cpfs_invalidos = ['00000000001', '00000000002']
-
 # Normaliza colunas de texto em ambos os dataframes
 colunas_normalizar = ['NOME_RF', 'NOME_MAE']
 true = normalizar_colunas(true, colunas_normalizar)
