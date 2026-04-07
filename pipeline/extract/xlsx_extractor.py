@@ -18,7 +18,7 @@ import unicodedata
 import re
 from difflib import get_close_matches
 
-from pipeline.config import CAMINHO_XLSX, ARQUIVO_CONSOLIDADO_XLSX, ARQUIVO_COLUNAS_XLSX
+from pipeline.config import CAMINHO_XLSX, ARQUIVO_COLUNAS_XLSX, ARQUIVO_CONSOLIDADO_XLSX, ARQUIVO_FILTRO_XLSX
 from pipeline.config import ARQUIVO_FILTRO_XLSX
 from pipeline.extract.utils import ler_excel_robusto, normalizar_colunas, remover_acentos
 
@@ -64,7 +64,7 @@ def encontrar_coluna_similar(coluna_procurada, colunas_disponiveis, threshold=0.
 # Função para listar arquivos e planilhas
 def listar_arquivos_e_planilhas(caminho):
     """
-    Lista todos os arquivos XLSX e suas respectivas planilhas.
+    Lista todos os arquivos XLSX e suas respectivas planilhas, bem como o número de linhas em cada uma.
     """
     arquivos = glob.glob(f"{caminho}/*.xlsx")
     dados = []
@@ -77,7 +77,8 @@ def listar_arquivos_e_planilhas(caminho):
             for sheet in xls.sheet_names:
                 dados.append({
                     "arquivo": nome_arquivo,
-                    "planilha": sheet
+                    "planilha": sheet,
+                    "linhas": len(pd.read_excel(xls, sheet_name=sheet, dtype=str))
                 })
         except Exception as e:
             print(f"✗ Erro ao ler {arquivo}: {e}")
@@ -110,6 +111,7 @@ def extrair_dados_xlsx(caminho, arquivo_filtro=None):
     for index, row in df_config.iterrows():
         arquivo = row.get("arquivo", row.get("Arquivo", ""))
         planilha = row.get("planilha", row.get("Planilha", ""))
+        linhas = row.get("linhas", row.get("Linhas", 0))
         
         caminho_arquivo = os.path.join(caminho, arquivo)
 
@@ -119,6 +121,7 @@ def extrair_dados_xlsx(caminho, arquivo_filtro=None):
             df.columns = normalizar_colunas(df.columns)
             df["arquivo"] = arquivo
             df["planilha"] = planilha
+            df["linhas"] = linhas
             
             dataframes.append(df)
             print(f"  ✓ Extraído: {arquivo} → Planilha '{planilha}' ({len(df)} linhas)")
@@ -173,8 +176,8 @@ def run(caminho=None, arquivo_filtro=None, salvar=True):
     print(f"\n✓ Total de linhas consolidadas: {len(df_consolidado)}")
     
     #if salvar:
-    #df_consolidado.to_excel(ARQUIVO_CONSOLIDADO_XLSX, index=False)
-    #print(f"✓ Salvo: {ARQUIVO_CONSOLIDADO_XLSX}")
+    #    df_consolidado.to_excel(ARQUIVO_CONSOLIDADO_XLSX, index=False)
+   # print(f"✓ Salvo: {ARQUIVO_CONSOLIDADO_XLSX}")
     
     return df_consolidado
 
