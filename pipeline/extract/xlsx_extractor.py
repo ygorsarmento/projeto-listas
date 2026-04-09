@@ -86,17 +86,20 @@ def listar_arquivos_e_planilhas(caminho):
     return dados
 
 
-def extrair_dados_xlsx(caminho, arquivo_filtro=None):
+def extrair_dados_xlsx(caminho, arquivo_filtro):
     """
     Extrai dados de planilhas filtradas ou de todas as planilhas.
-    
+
     Args:
         caminho: Caminho com arquivos XLSX
-        arquivo_filtro: Arquivo de configuração (se None, processa todas)
+        arquivo_filtro: Arquivo de configuração ou DataFrame já carregado
     """
 
-    # Lê arquivo de filtro ou lista todas as planilhas    
-    if arquivo_filtro and os.path.exists(arquivo_filtro):
+    # Lê arquivo de filtro ou usa DataFrame já carregado
+    if isinstance(arquivo_filtro, pd.DataFrame):
+        print(f"\n📋 Usando DataFrame já carregado ({len(arquivo_filtro)} planilhas)")
+        df_config = arquivo_filtro
+    elif arquivo_filtro and os.path.exists(arquivo_filtro):
         print(f"\n📋 Usando arquivo de filtro: {arquivo_filtro}")
         df_config = ler_excel_robusto(arquivo_filtro, dtype=str)
         df_config = df_config.rename(columns=str.lower)
@@ -152,32 +155,45 @@ def run(caminho=None, arquivo_filtro=None, salvar=True):
     """
     caminho = caminho or CAMINHO_XLSX
     arquivo_filtro = arquivo_filtro or ARQUIVO_FILTRO_XLSX
-    
+
     print("\n" + "="*60)
-    print("ETAPA 1: Listando arquivos e planilhas XLSX")
+    print("ETAPA 1: Verificando arquivo de filtro XLSX")
     print("="*60)
-    
-    # Listar arquivos
-    dados = listar_arquivos_e_planilhas(caminho)
-    df_planilhas = pd.DataFrame(dados)
-    print(f"\n✓ Encontradas {len(df_planilhas)} planilha(s)")
-    
-    if salvar:
-        # Exportar lista para arquivo de filtro
-        df_planilhas.to_excel(ARQUIVO_COLUNAS_XLSX, index=False)
-        print(f"✓ Salvo: {ARQUIVO_COLUNAS_XLSX}")
+
+    # Verifica se existe arquivo de filtro
+    if arquivo_filtro and os.path.exists(arquivo_filtro):
+        print(f"\n📋 Usando arquivo de filtro: {arquivo_filtro}")
+        df_config = ler_excel_robusto(arquivo_filtro, dtype=str)
+        df_config = df_config.rename(columns=str.lower)
+        print(f"✓ Encontradas {len(df_config)} planilha(s) no arquivo de filtro")
+    else:
+        # Se não existe filtro, lista todas as planilhas disponíveis
+        print(f"\n⚠️  Arquivo de filtro não encontrado: {arquivo_filtro}")
+        print(f"📋 Listando todas as planilhas disponíveis...")
+        
+        dados = listar_arquivos_e_planilhas(caminho)
+        df_planilhas = pd.DataFrame(dados)
+        print(f"✓ Encontradas {len(df_planilhas)} planilha(s)")
+
+        if salvar:
+            # Exportar lista para arquivo de filtro
+            df_planilhas.to_excel(ARQUIVO_COLUNAS_XLSX, index=False)
+            print(f"✓ Salvo: {ARQUIVO_COLUNAS_XLSX}")
+            print(f"💡 Edite este arquivo para selecionar quais planilhas processar")
+        
+        df_config = df_planilhas
     
     print("\n" + "="*60)
     print("ETAPA 2: Extraindo e consolidando dados XLSX")
     print("="*60)
     
-    # Extrair dados
-    df_consolidado = extrair_dados_xlsx(caminho, arquivo_filtro)
+    # Extrair dados usando o df_config já carregado
+    df_consolidado = extrair_dados_xlsx(caminho, df_config)
     print(f"\n✓ Total de linhas consolidadas: {len(df_consolidado)}")
     
-    #if salvar:
-    #    df_consolidado.to_excel(ARQUIVO_CONSOLIDADO_XLSX, index=False)
-   # print(f"✓ Salvo: {ARQUIVO_CONSOLIDADO_XLSX}")
+    if salvar:
+        df_consolidado.to_excel(ARQUIVO_CONSOLIDADO_XLSX, index=False)
+    print(f"✓ Salvo: {ARQUIVO_CONSOLIDADO_XLSX}")
     
     return df_consolidado
 
