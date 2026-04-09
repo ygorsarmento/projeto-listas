@@ -19,7 +19,7 @@ import re
 from difflib import get_close_matches
 
 from pipeline.config import CAMINHO_XLSX, ARQUIVO_COLUNAS_XLSX, ARQUIVO_CONSOLIDADO_XLSX, ARQUIVO_FILTRO_XLSX
-from pipeline.config import ARQUIVO_FILTRO_XLSX
+from pipeline.config import ARQUIVO_FILTRO_XLSX, SEPARADOR_EXPORTACAO, ENCODING_EXPORTACAO
 from pipeline.extract.utils import ler_excel_robusto, normalizar_colunas, remover_acentos
 
 
@@ -118,16 +118,31 @@ def extrair_dados_xlsx(caminho, arquivo_filtro):
         
         caminho_arquivo = os.path.join(caminho, arquivo)
 
-       # Tenta ler a planilha, normalizar colunas e adicionar colunas de origem 
+       # Tenta ler a planilha, normalizar colunas e adicionar colunas de origem
         try:
-            df = ler_excel_robusto(caminho_arquivo, sheet_name=planilha, dtype=str)
+            df = ler_excel_robusto(caminho_arquivo, sheet_name=planilha, dtype=str, encontrar_cabecalho=True)
+            
+            # Remove colunas que são totalmente Unnamed ou vazias
+            colunas_validas = []
+            for col in df.columns:
+                # Mantém a coluna se não for Unnamed ou se tiver dados válidos
+                if not str(col).startswith('Unnamed') and str(col).strip() != '':
+                    colunas_validas.append(col)
+            
+            # Se todas as colunas são Unnamed, mantém todas (caso extremo)
+            if not colunas_validas:
+                colunas_validas = list(df.columns)
+            else:
+                # Remove colunas Unnamed
+                df = df[colunas_validas]
+            
             df.columns = normalizar_colunas(df.columns)
             df["arquivo"] = arquivo
             df["planilha"] = planilha
             df["linhas"] = linhas
-            
+
             dataframes.append(df)
-            print(f"  ✓ Extraído: {arquivo} → Planilha '{planilha}' ({len(df)} linhas)")
+            print(f"  ✓ Extraído: {arquivo} → Planilha '{planilha}' ({len(df)} linhas, {len(df.columns)} colunas)")
             
         except FileNotFoundError:
             print(f"  ✗ Arquivo não encontrado: {caminho_arquivo}")
@@ -190,9 +205,14 @@ def run(caminho=None, arquivo_filtro=None, salvar=True):
     # Extrair dados usando o df_config já carregado
     df_consolidado = extrair_dados_xlsx(caminho, df_config)
     print(f"\n✓ Total de linhas consolidadas: {len(df_consolidado)}")
-    
+
     if salvar:
-        df_consolidado.to_excel(ARQUIVO_CONSOLIDADO_XLSX, index=False)
+        df_consolidado.to_csv(
+            ARQUIVO_CONSOLIDADO_XLSX, 
+            index=False, 
+            sep=SEPARADOR_EXPORTACAO, 
+            encoding=ENCODING_EXPORTACAO
+        )
     print(f"✓ Salvo: {ARQUIVO_CONSOLIDADO_XLSX}")
     
     return df_consolidado

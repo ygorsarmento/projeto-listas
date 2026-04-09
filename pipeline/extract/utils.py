@@ -59,7 +59,7 @@ def ler_csv_robusto(arquivo, **kwargs):
     )
 
 
-def ler_excel_robusto(arquivo, sheet_name=0, **kwargs):
+def ler_excel_robusto(arquivo, sheet_name=0, encontrar_cabecalho=False, **kwargs):
     """
     Lê arquivo Excel com tratamento de erros e normaliza os dados:
     - Remove caracteres invisíveis (\r, \n, \t, apóstrofo)
@@ -67,9 +67,48 @@ def ler_excel_robusto(arquivo, sheet_name=0, **kwargs):
     - Remove espaços extras
     - Converte CPFs para numérico limpo (se possível)
     - Remove linhas que estão em branco
+    - Opcional: pula linhas até encontrar o cabeçalho real (ignora Unnamed)
+
+    Args:
+        arquivo: Caminho do arquivo Excel
+        sheet_name: Nome ou índice da planilha
+        encontrar_cabecalho: Se True, procura o cabeçalho real pulando linhas iniciais
+        **kwargs: Argumentos adicionais para pd.read_excel()
+
+    Returns:
+        pd.DataFrame: DataFrame com os dados
     """
     try:
-        df = pd.read_excel(arquivo, sheet_name=sheet_name, **kwargs)
+        # Se encontrar_cabecalho=True, procura a linha do cabeçalho real
+        if encontrar_cabecalho:
+            df = pd.read_excel(arquivo, sheet_name=sheet_name, header=None, dtype=str)
+            
+            # Procura a linha com menos colunas Unnamed/vazias
+            melhor_linha = 0
+            menor_contagem_unnamed = len(df.columns)
+            
+            for idx, row in df.iterrows():
+                # Conta quantas colunas são Unnamed ou vazias
+                contagem_unnamed = sum(
+                    1 for val in row 
+                    if pd.isna(val) or str(val).strip() == '' or str(val).strip().startswith('Unnamed')
+                )
+                
+                # Se esta linha tem menos Unnamed que a anterior, é um candidato melhor
+                if contagem_unnamed < menor_contagem_unnamed:
+                    menor_contagem_unnamed = contagem_unnamed
+                    melhor_linha = idx
+                
+                # Se encontrou uma linha com maioria de colunas preenchidas, usa ela
+                if contagem_unnamed < len(df.columns) * 0.5:
+                    melhor_linha = idx
+                    break
+            
+            # Rele o arquivo usando a linha encontrada como header
+            df = pd.read_excel(arquivo, sheet_name=sheet_name, header=melhor_linha, **kwargs)
+            print(f"  🔍 Cabeçalho encontrado na linha {melhor_linha}")
+        else:
+            df = pd.read_excel(arquivo, sheet_name=sheet_name, **kwargs)
 
         # Função de limpeza robusta
         def limpar_texto(x):
